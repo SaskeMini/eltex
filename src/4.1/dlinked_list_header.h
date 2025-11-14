@@ -16,6 +16,7 @@ typedef struct Contact {
 struct Contact *AddItem (int id, struct Contact* head, Info* all);
 struct Contact *EditItem (int id, struct Contact* head, Info* all);
 struct Contact *DeleteItem (int id, struct Contact* head);
+struct Contact *SortItems (struct Contact* head);
 void deleteList(struct Contact* head);
 void printList(struct Contact* head);
 struct Contact *add(struct Contact *head, int* length);

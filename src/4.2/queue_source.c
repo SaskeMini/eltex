@@ -47,7 +47,7 @@ struct Queue *AddItem (int priority, struct Queue* first){
 
 struct Queue *ExtractionItem (int priority, struct Queue* first, int check_operation){
     struct Queue* tmp = first;
-    char check = 1;
+    char check = 1, check_to_op_3 = 1;
     if (first->priority == priority || check_operation == 1) {
         printf("Extraction of element with priority %d is completed\n", first->priority);
         struct Queue *item = first;
@@ -62,13 +62,13 @@ struct Queue *ExtractionItem (int priority, struct Queue* first, int check_opera
         free(item);
         return first;
     }
-    if (first->priority >= priority && check_operation == 3){
-        printf("Extraction of element with priority %d is completed\n", first->priority);
-        struct Queue *item = first;
-        first = first->next;
-        free(item);
-        return first;
-    }
+    // if (first->priority >= priority && check_operation == 3){
+    //     printf("Extraction of element with priority %d is completed\n", first->priority);
+    //     struct Queue *item = first;
+    //     first = first->next;
+    //     free(item);
+    //     return first;
+    // }
     while(tmp->next != NULL){
         if (priority == tmp->next->priority && check_operation == 2){
             printf("Extraction of element with priority %d is completed\n", priority);
@@ -79,16 +79,42 @@ struct Queue *ExtractionItem (int priority, struct Queue* first, int check_opera
             break;
         }
         else if (priority <= tmp->next->priority && check_operation == 3){
-            printf("Extraction of element with priority %d is completed\n", tmp->next->priority);
-            struct Queue *item = tmp->next;
-            tmp->next = tmp->next->next;
-            free(item);
-            check = 0;
-            break;
+            if (tmp->next->next){
+                if (priority <= tmp->next->next->priority){
+                    tmp = tmp->next;
+                }
+                else{
+                    printf("Extraction of element with priority %d is completed\n", tmp->next->priority);
+                    struct Queue *item = tmp->next;
+                    tmp->next = tmp->next->next;
+                    free(item);
+                    check = 0;
+                    check_to_op_3 = 0;
+                    break;
+                }
+            }
+            else{
+                printf("Extraction of element with priority %d is completed\n", tmp->next->priority);
+                struct Queue *item = tmp->next;
+                tmp->next = tmp->next->next;
+                free(item);
+                check = 0;
+                check_to_op_3 = 0;
+                break;
+            }
         }
         else tmp = tmp->next;
     }
-    if (check){
+    tmp = first;
+    if (check_to_op_3 && tmp->priority >= priority){
+        printf("Extraction of element with priority %d is completed\n", tmp->priority);
+        struct Queue *item = tmp->next;
+        tmp->next = tmp->next->next;
+        free(item);
+        check = 0;
+        check_to_op_3 = 0;
+    }
+    else if (check){
         printf("No elements with this priority.\n");
     }
     return first;

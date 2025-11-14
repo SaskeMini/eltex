@@ -80,6 +80,7 @@ struct Contact *add(struct Contact *head, int* length){
     input = NULL;
     *length = *length + 1;
     head = AddItem(*length, head, &new_info);
+    head = SortItems(head);
     return head;
 }
 
@@ -105,7 +106,7 @@ struct Contact *edit(struct Contact *head, int* length){
     char* input = malloc(sizeof(char) * 100);
 
     printf("Enter name (you can skip this point, press enter):\n");
-    fgets(input, 100, stdin);
+    fgets(input, 100, stdin); 
     if (!(input[0] == '\0' || input[0] == '\n')) { del_enter(input); strcpy(new_info.name, input); }
     memset(input, 0, 100 * sizeof(char));
 
@@ -167,6 +168,7 @@ struct Contact *edit(struct Contact *head, int* length){
     free(input);
     input = NULL;
     head = EditItem(n, head, &new_info);
+    head = SortItems(head);
     return head;
 }
 
@@ -237,24 +239,29 @@ struct Contact *AddItem (int id, struct Contact* head, Info* all){
     item->next = NULL;
 
     struct Contact* tmp = head;
-    if (head == NULL) return item;
+    if (head == NULL) {
+        item->prev = NULL;
+        item->next = NULL;
+        return item;
+    }
 
     if (id < head->id){
         item->next = head;
-        head->prev = item;
+        item->next->prev = item;
         return item;
     }
 
     while(tmp->next != NULL){
         if (id < tmp->next->id){
             item->next = tmp->next;
-            tmp->next = item;
+            item->prev = tmp;
+            item->prev->next = item;
             break;
         }
         else tmp = tmp->next;
     }
-    tmp->next = item;
     item->prev = tmp;
+    item->prev->next = item;
     return head;
 }
 
@@ -283,6 +290,7 @@ struct Contact *EditItem (int id, struct Contact* head, Info* all){
     struct Contact* item = malloc(sizeof(struct Contact));
     item->id = id;
     struct Contact* tmp = head;
+    char check_last = 1;
     while(tmp->next != NULL){
         if (id == tmp->id){
             if(all->name[0] != '\0') { strcpy(item->name, all->name); }
@@ -308,9 +316,74 @@ struct Contact *EditItem (int id, struct Contact* head, Info* all){
             item->next = tmp->next;
             item->prev = tmp->prev;
             free(tmp);
+            check_last = 0;
             break;
         }
         else tmp = tmp->next;
+    }
+    if (check_last){
+        if(all->name[0] != '\0') { strcpy(item->name, all->name); }
+        else {strcpy(item->name, tmp->name);}
+        if(all->surname[0] != '\0') { strcpy(item->surname, all->surname); }
+        else {strcpy(item->surname, tmp->surname);}
+        if(all->second_name[0] != '\0') { strcpy(item->second_name, all->second_name); }
+        else {strcpy(item->second_name, tmp->second_name);}
+        if(all->work[0] != '\0') { strcpy(item->work, all->work); }
+        else {strcpy(item->work, tmp->work);}
+        if(all->phone_number[0] != '\0') { strcpy(item->phone_number, all->phone_number); }
+        else {strcpy(item->phone_number, tmp->phone_number);}
+        if(all->email[0] != '\0') { strcpy(item->email, all->email); }
+        else {strcpy(item->email, tmp->email);}
+        if(all->social_media[0] != '\0') { strcpy(item->social_media, all->social_media); }
+        else {strcpy(item->social_media, tmp->social_media);}
+        if (tmp->prev){
+            tmp->prev->next = item;
+        }
+        if (tmp->next){
+            tmp->next->prev = item;
+        }
+        if (tmp->next){
+            item->next = tmp->next;
+        }
+        else{
+            item->next = NULL;
+        }
+        item->prev = tmp->prev;
+        free(tmp);
+    }
+    return head;
+}
+
+struct Contact *SortItems (struct Contact* head){
+    char check = 1;
+    while(check){
+        struct Contact* tmp = head;
+        check = 0;
+        while(tmp->next != NULL){
+            if (strcmp(tmp->surname, tmp->next->surname) > 0){
+                check = 1;
+                Info info_next;
+                strcpy(info_next.name, tmp->next->name);
+                strcpy(info_next.surname, tmp->next->surname);
+                strcpy(info_next.second_name, tmp->next->second_name);
+                strcpy(info_next.work, tmp->next->work);
+                strcpy(info_next.email, tmp->next->email);
+                strcpy(info_next.phone_number, tmp->next->phone_number);
+                strcpy(info_next.social_media, tmp->next->social_media);
+                struct Contact *temp_next = NULL;
+                struct Contact *to_del = tmp->next;
+                if (tmp->next->next) {
+                    tmp->next->next->prev = tmp;
+                    temp_next = tmp->next->next;
+                }
+                free(to_del);
+                tmp->next = temp_next;
+                tmp->id = tmp->id + 1;
+                head = AddItem(tmp->id - 1, head, &info_next);
+                break;
+            }
+            tmp = tmp->next;
+        }
     }
     return head;
 }
@@ -330,10 +403,15 @@ struct Contact *DeleteItem (int id, struct Contact* head){
     }
     while(tmp->next != NULL){
         if (id == tmp->next->id){
+            struct Contact *temp_next = NULL;
             struct Contact *item = tmp->next;
-            tmp->next = tmp->next->next;
-            tmp->next->prev = tmp;
+            if (tmp->next->next) {
+                tmp->next->next->prev = tmp;
+                temp_next = tmp->next->next;
+                //tmp->next->prev = tmp;
+            }
             free(item);
+            tmp->next = temp_next;
             break;
         }
         else tmp = tmp->next;
@@ -341,7 +419,9 @@ struct Contact *DeleteItem (int id, struct Contact* head){
     tmp = head->next;
     if (tmp == NULL) return head;
     if (tmp->next == NULL){
-        tmp->id = tmp->id - 1;
+        if (tmp->prev->id != tmp->id - 1){
+            tmp->id = tmp->id - 1;
+        }
         return head;
     }
     char check = 0;
